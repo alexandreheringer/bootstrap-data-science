@@ -6,7 +6,7 @@
 #
 # .DESCRIPTION
 #    This script prepares the Ubuntu environment by:
-#    1. Installing base dependencies (git, curl, build-essential).
+#    1. Installing base dependencies (git, curl, build-essential, unzip).
 #    2. Creating the Data-Platform Structure directory structure.
 #    3. Configuring the .bashrc file with required PATHs and aliases.
 #    4. Installing 'uv' (Python manager).
@@ -15,7 +15,7 @@
 #    7. Installing WSL-side VS Code extensions.
 #
 # .NOTES
-#    VERSION: 2.0
+#    VERSION: 2.1 (Added 'unzip' to Step 1, which is a dependency for fnm in Step 5)
 #    AUTHOR: Alexandre Oliveira
 #    RUN: Run this script from INSIDE the Ubuntu 24.04 WSL terminal.
 #         (e.g., using the 'curl ... | bash' one-liner)
@@ -38,8 +38,9 @@ set -e
 print_header "Step 1: Installing Base System Dependencies"
 echo "Updating package lists..."
 sudo apt-get update
-echo "Installing git, curl, build-essential, ca-certificates..."
-sudo apt-get install -y git curl build-essential ca-certificates
+echo "Installing git, curl, build-essential, ca-certificates, and unzip..."
+# 'unzip' is required by the 'fnm' installer (Step 5)
+sudo apt-get install -y git curl build-essential ca-certificates unzip
 
 # --- Step 2: Create Data-Platform Structure Directory Structure ---
 print_header "Step 2: Creating Data-Platform Structure"
@@ -211,3 +212,5 @@ echo "   gemini"
 echo ""
 echo "After that, you are ready to navigate to '~/21-Main-Projects' and start your work!"
 echo ""
+
+
