@@ -8,14 +8,14 @@
 #    This script prepares the Ubuntu environment by:
 #    1. Installing base dependencies (git, curl, build-essential, unzip).
 #    2. Creating the Data-Platform Structure directory structure.
-#    3. Configuring the .bashrc file with required PATHs and aliases.
+#    3. Configuring the .bashrc file with required PATHs.
 #    4. Installing 'uv' (Python manager).
-#    5. Installing Node.js LTS (via NodeSource) and the Gemini CLI.
+#    5. Installing Node.js LTS (via fnm) into the Data-Platform Structure and installing Gemini CLI.
 #    6. Installing global Python tools (ruff, black, etc.) via uv.
 #    7. Installing WSL-side VS Code extensions.
 #
 # .NOTES
-#    VERSION: 2.6 (Fixed 'sudo: npm: command not found' by using full 'which npm' path)
+#    VERSION: 2.8 (Restored fnm and Data-Platform Structure for Node.js)
 #    AUTHOR: Alexandre Oliveira
 #    RUN: Run this script from INSIDE the Ubuntu 24.04 WSL terminal.
 #         (e.g., using the 'curl ... | bash' one-liner)
@@ -46,7 +46,8 @@ print_header "Step 2: Creating Data-Platform Structure"
 echo "Creating Data-Platform folder structure in home directory (~/)..."
 # The '-p' flag ensures mkdir doesn't error if directories already exist
 mkdir -p "$HOME/11-System-Tooling/11.10-Bin"
-mkdir -p "$HOME/11-System-Tooling/11.20-Configs"
+mkdir -p "$HOME/11-System-Tooling/11.20-Node" # Restored in v2.8
+mkdir -p "$HOME/11-System-Tooling/11.30-Configs" # Restored in v2.8
 mkdir -p "$HOME/21-Main-Projects"
 mkdir -p "$HOME/31-Other-Projects"
 echo "Directory structure created/verified."
@@ -68,6 +69,13 @@ export PATH="$HOME/.local/bin:$PATH"
 
 # Your personal scripts and downloaded binaries
 export PATH="$TOOLING/11.10-Bin:$PATH"
+
+# fnm (Node.js Version Manager)
+# This directory is specified for fnm to install Node.js versions
+export FNM_DIR="$TOOLING/11.20-Node"
+export PATH="$FNM_DIR/bin:$PATH"
+# This line ensures fnm's environment (shims, etc.) is loaded in interactive shells
+eval "$(fnm env)"
 # === END Data-Platform Structure ===
 
 SH
@@ -89,38 +97,49 @@ fi
 export PATH="$HOME/.local/bin:$PATH"
 uv --version
 
-# --- Step 5: Install Node.js LTS + Gemini CLI ---
-print_header "Step 5: Installing Node.js LTS + Gemini CLI"
+# --- Step 5: Install Node.js LTS + Gemini CLI (via fnm) ---
+print_header "Step 5: Installing Node.js LTS + Gemini CLI (via fnm)"
 
-# Check if node/npm is installed. If not, install from NodeSource (LTS).
-if ! command -v npm &> /dev/null; then
-    echo "Node.js/npm not found. Installing via NodeSource..."
-    # Download and execute the NodeSource setup script for the LTS version
-    curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
-    # Install Node.js (which includes npm)
-    sudo apt-get install -y nodejs
+# Set the directory (must match Step 3)
+export FNM_DIR="$HOME/11-System-Tooling/11.20-Node"
+export PATH="$FNM_DIR/bin:$PATH"
+
+if ! command -v fnm &> /dev/null; then
+    echo "fnm not found. Installing..."
+    # Install fnm, telling it where to install itself (bin) and NOT to modify the shell (skip-shell)
+    curl -fsSL https://fnm.vercel.app/install | bash -s -- --install-dir "$FNM_DIR/bin" --skip-shell
+    echo "fnm installed."
 else
-    echo "Node.js/npm is already installed. Skipping installation."
+    echo "fnm is already installed. Skipping."
 fi
+
+echo "Installing Node.js LTS..."
+fnm install --lts
+fnm default lts-latest # Set as default
+
+# --- FIX FOR 'curl | bash' ---
+# The 'eval $(fnm env)' command fails in the non-interactive 'curl | bash' shell.
+# We must manually find the 'default' path and add it to the CURRENT session's PATH.
+NODE_DEFAULT_PATH="$FNM_DIR/default/bin"
+
+if [ -d "$NODE_DEFAULT_PATH" ]; then
+    export PATH="$NODE_DEFAULT_PATH:$PATH"
+    echo "Node.js $(node --version) activated in current session."
+else
+    echo "ERROR: Could not find Node.js 'default' path. npm will fail."
+    echo "Attempting to find fnm executable path: $FNM_DIR/bin/fnm"
+    ls -l "$FNM_DIR/bin"
+    exit 1
+fi
+# --- END FIX ---
 
 echo "Node $(node --version) and npm $(npm --version) installed."
 
-# --- FIX (v2.6): Use the full path to npm for sudo ---
-# 'sudo' uses a 'secure_path' and may not find 'npm' even if the user can.
-# We find the full path to 'npm' and explicitly tell sudo to use it.
-NPM_PATH=$(which npm)
-
-if [ -z "$NPM_PATH" ]; then
-    echo "ERROR: Could not find npm executable path, even though npm was detected."
-    exit 1
-fi
-
-echo "Found npm at: $NPM_PATH"
-echo "Installing/Updating @google/gemini-cli via npm using sudo..."
-sudo "$NPM_PATH" install -g @google/gemini-cli
-# --- END FIX ---
-
+# Install Gemini CLI (NO SUDO, as we are in a user-owned directory)
+echo "Installing/Updating @google/gemini-cli via npm (no sudo)..."
+npm install -g @google/gemini-cli
 echo "Gemini CLI installed."
+
 
 # --- Step 6: Install Global Python Tools (with uv) ---
 print_header "Step 6: Installing Global Python Tools"
