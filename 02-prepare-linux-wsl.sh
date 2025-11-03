@@ -15,7 +15,7 @@
 #    7. Installing WSL-side VS Code extensions.
 #
 # .NOTES
-#    VERSION: 2.3 (Replaced second 'eval' with direct PATH export in Step 5)
+#    VERSION: 2.4 (Replaced 'default' symlink with direct version PATH in Step 5)
 #    AUTHOR: Alexandre Oliveira
 #    RUN: Run this script from INSIDE the Ubuntu 24.04 WSL terminal.
 #         (e.g., using the 'curl ... | bash' one-liner)
@@ -118,13 +118,16 @@ eval "$(fnm env)"
 # Install Node.js LTS
 echo "Installing Node.js LTS..."
 fnm install --lts
-fnm default $(fnm ls | tail -1 | tr -d ' ' | sed 's/*//g')
+# Get the latest installed version name (e.g., "v24.11.0")
+NODE_VERSION=$(fnm ls | tail -1 | tr -d ' ' | sed 's/*//g')
+fnm default $NODE_VERSION
 
-# --- FIX (v2.3): Manually export the Node.js bin path ---
-# The 'eval "$(fnm env)"' command fails in curl|bash shells.
-# We will manually add the 'default' bin path to the session PATH.
-echo "Activating Node.js LTS in the current session..."
-export PATH="$FNM_DIR/default/bin:$PATH"
+# --- FIX (v2.4): Manually export the specific Node.js bin path ---
+# The 'eval' and 'default' symlink methods are unreliable in curl|bash.
+# We will manually add the *specific version's* bin path to the session PATH.
+echo "Activating Node.js $NODE_VERSION in the current session..."
+NODE_BIN_PATH="$FNM_DIR/node-versions/$NODE_VERSION/installation/bin"
+export PATH="$NODE_BIN_PATH:$PATH"
 # --- END FIX ---
 
 echo "Node $(node --version) and npm $(npm --version) installed."
