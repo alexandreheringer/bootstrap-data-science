@@ -15,7 +15,7 @@
 #    7. Installing WSL-side VS Code extensions.
 #
 # .NOTES
-#    VERSION: 2.5 (Replaced fnm with NodeSource 'apt' install for reliability)
+#    VERSION: 2.6 (Fixed 'sudo: npm: command not found' by using full 'which npm' path)
 #    AUTHOR: Alexandre Oliveira
 #    RUN: Run this script from INSIDE the Ubuntu 24.04 WSL terminal.
 #         (e.g., using the 'curl ... | bash' one-liner)
@@ -105,9 +105,21 @@ fi
 
 echo "Node $(node --version) and npm $(npm --version) installed."
 
-# Install/Update Gemini CLI globally using the system's npm
-echo "Installing/Updating @google/gemini-cli via npm..."
-sudo npm install -g @google/gemini-cli
+# --- FIX (v2.6): Use the full path to npm for sudo ---
+# 'sudo' uses a 'secure_path' and may not find 'npm' even if the user can.
+# We find the full path to 'npm' and explicitly tell sudo to use it.
+NPM_PATH=$(which npm)
+
+if [ -z "$NPM_PATH" ]; then
+    echo "ERROR: Could not find npm executable path, even though npm was detected."
+    exit 1
+fi
+
+echo "Found npm at: $NPM_PATH"
+echo "Installing/Updating @google/gemini-cli via npm using sudo..."
+sudo "$NPM_PATH" install -g @google/gemini-cli
+# --- END FIX ---
+
 echo "Gemini CLI installed."
 
 # --- Step 6: Install Global Python Tools (with uv) ---
