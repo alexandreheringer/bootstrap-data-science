@@ -15,7 +15,7 @@
 #    7. Installing WSL-side VS Code extensions.
 #
 # .NOTES
-#    VERSION: 2.1 (Added 'unzip' to Step 1, which is a dependency for fnm in Step 5)
+#    VERSION: 2.2 (Added a second 'eval fnm env' in Step 5 to fix PATH issue)
 #    AUTHOR: Alexandre Oliveira
 #    RUN: Run this script from INSIDE the Ubuntu 24.04 WSL terminal.
 #         (e.g., using the 'curl ... | bash' one-liner)
@@ -119,6 +119,13 @@ eval "$(fnm env)"
 echo "Installing Node.js LTS..."
 fnm install --lts
 fnm default $(fnm ls | tail -1 | tr -d ' ' | sed 's/*//g')
+
+# --- FIX (v2.2): Re-source the fnm environment ---
+# We must run this AGAIN after install/default to update the shell's PATH
+echo "Activating Node.js LTS in the current session..."
+eval "$(fnm env)"
+# --- END FIX ---
+
 echo "Node $(node --version) and npm $(npm --version) installed."
 
 # Install/Update Gemini CLI
@@ -212,5 +219,3 @@ echo "   gemini"
 echo ""
 echo "After that, you are ready to navigate to '~/21-Main-Projects' and start your work!"
 echo ""
-
-
