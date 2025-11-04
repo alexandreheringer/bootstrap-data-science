@@ -11,11 +11,12 @@
 #    4. Configuring the .zshrc file (macOS default shell) with the required PATHs.
 #    5. Installing 'uv' (Python manager).
 #    6. Installing 'fnm' (Node manager), Node LTS, and the Gemini CLI.
-#    7. Installing global Python tools (ruff, black, etc.) via uv.
-#    8. Installing all required VS Code extensions (combined lists from your scripts).
+#    7. Installing the Google Cloud SDK (gcloud CLI).
+#    8. Installing global Python tools (ruff, black, etc.) via uv.
+#    9. Installing all required VS Code extensions.
 #
 # .NOTES
-#    VERSION: 1.0 (Adapted for macOS from the WSL scripts)
+#    VERSION: 1.1 (Added GCP SDK Installation)
 #    AUTHOR: Alexandre Oliveira (Adapted for macOS by Gemini)
 #    RUN: Run this script from the macOS terminal.
 #         Ex: curl -LsSf [URL_TO_THIS_FILE] | bash
@@ -154,11 +155,11 @@ eval "$(fnm env)"
 echo "Installing Node.js LTS..."
 fnm install --lts
 
-# === INÍCIO DA CORREÇÃO ===
+# === START FIX ===
 # Get the name of the latest installed version
 # This method is robust and works even if fnm ls output changes.
 NODE_VERSION=$(fnm ls | grep -Eo 'v[0-9\.]+' | tail -1)
-# === FIM DA CORREÇÃO ===
+# === END FIX ===
 
 fnm default $NODE_VERSION
 
@@ -176,8 +177,27 @@ echo "Installing/Updating @google/gemini-cli via npm..."
 npm install -g @google/gemini-cli
 echo "Gemini CLI installed."
 
-# --- Step 7: Install Global Python Tools (with uv) ---
-print_header "Step 7: Installing Global Python Tools (with uv)"
+# --- Step 7: Install Google Cloud SDK (gcloud CLI) ---
+print_header "Step 7: Installing/Updating Google Cloud SDK (gcloud CLI)"
+
+# Purpose: Check if gcloud is already installed by checking the command.
+if ! command -v gcloud &> /dev/null; then
+    echo "gcloud CLI not found. Installing..."
+    # Purpose: Use Homebrew to install the cask. This is the standard way on macOS.
+    brew install --cask google-cloud-sdk
+    echo "gcloud CLI installed successfully."
+else
+    echo "gcloud CLI is already installed. Checking for updates..."
+    # Purpose: Use 'brew upgrade' to update the cask if a new version is available.
+    # 'brew update' was already run in Step 1.
+    brew upgrade --cask google-cloud-sdk
+    echo "gcloud CLI is up-to-date."
+fi
+echo "Run 'gcloud init' to configure after the script finishes."
+
+
+# --- Step 8: Install Global Python Tools (with uv) ---
+print_header "Step 8: Installing Global Python Tools (with uv)"
 echo "Using 'uv tool install' to make tools available globally (in ~/.local/bin)."
 
 # List of tools to install
@@ -203,8 +223,8 @@ done
 echo "Global Python tools installed/verified."
 ls -l ~/.local/bin
 
-# --- Step 8: Install VS Code Extensions ---
-print_header "Step 8: Installing VS Code Extensions"
+# --- Step 9: Install VS Code Extensions ---
+print_header "Step 9: Installing VS Code Extensions"
 echo "This will install all required extensions (combined from scripts 01 and 02)."
 
 # Check if the 'code' command (from VS Code) is available
@@ -256,14 +276,16 @@ else
     echo "and then run this script again."
 fi
 
-# --- Conclusion ---
+# --- Step 10: Conclusion ---
 print_header "Bootstrap COMPLETE!"
 echo ""
 echo "Your macOS environment is 100% configured."
 echo "Next steps:"
 echo "1. Close and RE-OPEN this terminal for all changes (especially to .zshrc) to take effect."
-echo "2. (Optional) Log in to the Gemini CLI by typing:"
+echo "2. Log in to the Gemini CLI by typing:"
 echo "   gemini"
+echo "3. Log in to the GCP CLI by typing:"
+echo "   gcloud auth login && gcloud config set project [YOUR-PROJECT-ID]"
 echo ""
 echo "After that, you are ready to navigate to '~/21-Main-Projects' and start your work!"
 echo ""
