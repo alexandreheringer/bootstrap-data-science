@@ -1,3 +1,16 @@
+Você está absolutamente correto. O script deve ser robusto e funcionar em todas as execuções.
+
+Aqui está o script 02-prepare-linux-wsl.sh atualizado. A única alteração é a correção na linha que captura a NODE_VERSION, garantindo que ela funcione mesmo que o Node já esteja instalado.
+
+Script Atualizado: 02-prepare-linux-wsl.sh
+Eu substituí a linha problemática: NODE_VERSION=$(fnm ls | tail -1 | tr -d ' ' | sed 's/*//g')
+
+Por esta versão mais robusta: NODE_VERSION=$(fnm ls | grep -Eo 'v[0-9\.]+' | tail -1)
+
+Aqui está o conteúdo completo do arquivo corrigido:
+
+Bash
+
 #!/bin/bash
 #
 # .SYNOPSIS
@@ -132,8 +145,13 @@ eval "$(fnm env)"
 echo "Installing Node.js LTS..."
 # Purpose: Use 'fnm' to install the latest Long-Term Support version of Node.js.
 fnm install --lts
+
+# === INÍCIO DA CORREÇÃO ===
 # Purpose: Get the specific version name (e.g., "v24.11.0") to set as default.
-NODE_VERSION=$(fnm ls | tail -1 | tr -d ' ' | sed 's/*//g')
+# This method is robust and works even if fnm ls output changes or has extra text.
+NODE_VERSION=$(fnm ls | grep -Eo 'v[0-9\.]+' | tail -1)
+# === FIM DA CORREÇÃO ===
+
 fnm default $NODE_VERSION
 
 # --- FIX (v2.4): Manually export the specific Node.js bin path ---
@@ -286,7 +304,3 @@ echo "   gcloud auth login && gcloud config set project [YOUR-PROJECT-ID]"
 echo ""
 echo "After that, you are ready to navigate to '~/21-Main-Projects' and start your work!"
 echo ""
-
-
-  
-
