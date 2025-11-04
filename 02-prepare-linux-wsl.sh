@@ -10,12 +10,12 @@
 #    2. Creating the Data-Platform Structure directory structure.
 #    3. Configuring the .bashrc file with required PATHs and aliases.
 #    4. Installing 'uv' (Python manager).
-#    5. Installing Node.js LTS (via NodeSource) and the Gemini CLI.
+#    5. Installing 'fnm' (Node manager), Node LTS, and the Gemini CLI.
 #    6. Installing global Python tools (ruff, black, etc.) via uv.
 #    7. Installing WSL-side VS Code extensions.
 #
 # .NOTES
-#    VERSION: 2.5 (Replaced fnm with NodeSource 'apt' install for reliability)
+#    VERSION: 2.4 (Replaced 'default' symlink with direct version PATH in Step 5)
 #    AUTHOR: Alexandre Oliveira
 #    RUN: Run this script from INSIDE the Ubuntu 24.04 WSL terminal.
 #         (e.g., using the 'curl ... | bash' one-liner)
@@ -39,6 +39,7 @@ print_header "Step 1: Installing Base System Dependencies"
 echo "Updating package lists..."
 sudo apt-get update
 echo "Installing git, curl, build-essential, ca-certificates, and unzip..."
+# 'unzip' is required by the 'fnm' installer (Step 5)
 sudo apt-get install -y git curl build-essential ca-certificates unzip
 
 # --- Step 2: Create Data-Platform Structure Directory Structure ---
@@ -46,7 +47,8 @@ print_header "Step 2: Creating Data-Platform Structure"
 echo "Creating Data-Platform folder structure in home directory (~/)..."
 # The '-p' flag ensures mkdir doesn't error if directories already exist
 mkdir -p "$HOME/11-System-Tooling/11.10-Bin"
-mkdir -p "$HOME/11-System-Tooling/11.20-Configs"
+mkdir -p "$HOME/11-System-Tooling/11.20-Node"
+mkdir -p "$HOME/11-System-Tooling/11.30-Configs"
 mkdir -p "$HOME/21-Main-Projects"
 mkdir -p "$HOME/31-Other-Projects"
 echo "Directory structure created/verified."
@@ -68,6 +70,11 @@ export PATH="$HOME/.local/bin:$PATH"
 
 # Your personal scripts and downloaded binaries
 export PATH="$TOOLING/11.10-Bin:$PATH"
+
+# fnm/node (for Gemini CLI)
+export FNM_DIR="$TOOLING/11.20-Node"
+export PATH="$FNM_DIR:$PATH"
+eval "$(fnm env)"
 # === END Data-Platform Structure ===
 
 SH
@@ -89,25 +96,45 @@ fi
 export PATH="$HOME/.local/bin:$PATH"
 uv --version
 
-# --- Step 5: Install Node.js LTS + Gemini CLI ---
-print_header "Step 5: Installing Node.js LTS + Gemini CLI"
+# --- Step 5: Install Node LTS + Gemini CLI (via fnm) ---
+print_header "Step 5: Installing Node LTS + Gemini CLI"
 
-# Check if node/npm is installed. If not, install from NodeSource (LTS).
-if ! command -v npm &> /dev/null; then
-    echo "Node.js/npm not found. Installing via NodeSource..."
-    # Download and execute the NodeSource setup script for the LTS version
-    curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
-    # Install Node.js (which includes npm)
-    sudo apt-get install -y nodejs
+# Set FNM_DIR for the install script
+export FNM_DIR="$HOME/11-System-Tooling/11.20-Node"
+export PATH="$FNM_DIR:$PATH"
+
+# Install fnm (Fast Node Manager)
+if ! command -v fnm &> /dev/null; then
+    echo "fnm not found. Installing..."
+    curl -fsSL https://fnm.vercel.app/install | bash -s -- --install-dir "$FNM_DIR" --skip-shell
+    echo "fnm installed."
 else
-    echo "Node.js/npm is already installed. Skipping installation."
+    echo "fnm is already installed. Skipping."
 fi
+
+# Add fnm to the current session's PATH and environment
+eval "$(fnm env)"
+
+# Install Node.js LTS
+echo "Installing Node.js LTS..."
+fnm install --lts
+# Get the latest installed version name (e.g., "v24.11.0")
+NODE_VERSION=$(fnm ls | tail -1 | tr -d ' ' | sed 's/*//g')
+fnm default $NODE_VERSION
+
+# --- FIX (v2.4): Manually export the specific Node.js bin path ---
+# The 'eval' and 'default' symlink methods are unreliable in curl|bash.
+# We will manually add the *specific version's* bin path to the session PATH.
+echo "Activating Node.js $NODE_VERSION in the current session..."
+NODE_BIN_PATH="$FNM_DIR/node-versions/$NODE_VERSION/installation/bin"
+export PATH="$NODE_BIN_PATH:$PATH"
+# --- END FIX ---
 
 echo "Node $(node --version) and npm $(npm --version) installed."
 
-# Install/Update Gemini CLI globally using the system's npm
+# Install/Update Gemini CLI
 echo "Installing/Updating @google/gemini-cli via npm..."
-sudo npm install -g @google/gemini-cli
+npm install -g @google/gemini-cli
 echo "Gemini CLI installed."
 
 # --- Step 6: Install Global Python Tools (with uv) ---
