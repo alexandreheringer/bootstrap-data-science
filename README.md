@@ -53,7 +53,7 @@ The setup is a two-part process. The first script prepares Windows, and the seco
 
 1.  **Run the Windows Prep Script (Script 1):**
     * Open **PowerShell as an Administrator**.
-    * Execute the following command to download and run the first script:
+    * Execute the following command to download and run the first script or copy and paste the cod directly in powershell:
         ```powershell
         Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process; iex (irm -Uri "[https://raw.githubusercontent.com/alexandreheringer/bootstrap-data-science/main/01-prepare-windows.ps1](https://raw.githubusercontent.com/alexandreheringer/bootstrap-data-science/main/01-prepare-windows.ps1)")
         ```
@@ -71,7 +71,7 @@ The setup is a two-part process. The first script prepares Windows, and the seco
     * Choose **WSL (Ubuntu-24.04)** from the list. This makes WSL your default terminal in VS Code.
 
 5.  **Run the Linux Setup Script (Script 2):**
-    * In the VS Code terminal (which is now a WSL/Ubuntu terminal), execute the following command:
+    * In the VS Code terminal (which is now a WSL/Ubuntu terminal), execute the following command or copy the code directly into Vscode terminal:
         ```bash
         curl -LsSf "[https://raw.githubusercontent.com/alexandreheringer/bootstrap-data-science/main/02-prepare-linux-wsl.sh](https://raw.githubusercontent.com/alexandreheringer/bootstrap-data-science/main/02-prepare-linux-wsl.sh)" | bash
         ```
