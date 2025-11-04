@@ -1,16 +1,3 @@
-Você está absolutamente correto. O script deve ser robusto e funcionar em todas as execuções.
-
-Aqui está o script 02-prepare-linux-wsl.sh atualizado. A única alteração é a correção na linha que captura a NODE_VERSION, garantindo que ela funcione mesmo que o Node já esteja instalado.
-
-Script Atualizado: 02-prepare-linux-wsl.sh
-Eu substituí a linha problemática: NODE_VERSION=$(fnm ls | tail -1 | tr -d ' ' | sed 's/*//g')
-
-Por esta versão mais robusta: NODE_VERSION=$(fnm ls | grep -Eo 'v[0-9\.]+' | tail -1)
-
-Aqui está o conteúdo completo do arquivo corrigido:
-
-Bash
-
 #!/bin/bash
 #
 # .SYNOPSIS
