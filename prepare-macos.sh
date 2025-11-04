@@ -153,8 +153,13 @@ eval "$(fnm env)"
 # Install Node.js LTS
 echo "Installing Node.js LTS..."
 fnm install --lts
+
+# === INÍCIO DA CORREÇÃO ===
 # Get the name of the latest installed version
-NODE_VERSION=$(fnm ls | tail -1 | tr -d ' ' | sed 's/*//g')
+# This method is robust and works even if fnm ls output changes.
+NODE_VERSION=$(fnm ls | grep -Eo 'v[0-9\.]+' | tail -1)
+# === FIM DA CORREÇÃO ===
+
 fnm default $NODE_VERSION
 
 # --- FIX (v2.4 from original script): Manually activate the Node bin ---
