@@ -111,6 +111,9 @@ This script runs inside Ubuntu (WSL) to configure the Linux development environm
   * Installs `fnm` (Fast Node Manager).
   * Uses `fnm` to install the latest LTS version of Node.js.
   * Uses `npm` to globally install `@google/gemini-cli`.
+* **☁️ Installs Google Cloud CLI:**
+  * Adds the Google Cloud apt repository and GPG key.
+  * Installs the google-cloud-cli package non-interactively.
 * **🔌 VS Code Extensions (WSL):** Installs a comprehensive list of extensions directly into the WSL environment for development, including:
   * `eamodio.gitlens` (GitLens)
   * `ms-toolsai.jupyter` (Jupyter)
